@@ -2,7 +2,9 @@
 
 import os
 import random
+from pathlib import Path
 
+import cv2
 import numpy as np
 import torch
 import torch.utils.data.distributed
@@ -23,6 +25,30 @@ def preprocessing_transforms(mode):
     return transforms.Compose([
         ToTensor(mode=mode)
     ])
+
+
+def load_motsynth_depth_image(img_path):
+    """Load depth image from .png file
+    Args:
+        img_path (str): path to the image
+    Returns:
+        ndarray: depth map
+    """
+    n = 1.04187
+    f = 800
+    abs_min = 1008334389
+    abs_max = 1067424357
+    depth = cv2.imread(img_path)[:, :, 0]
+    depth = np.uint32(depth)
+    depth = depth / 255
+    depth = (depth * (abs_max - abs_min)) + abs_min
+    depth = depth.astype('uint32')
+    depth.dtype = 'float32'
+    y = (-(n * f) / (n - f)) / (depth - (n / (n - f)))
+    y = y.reshape((1080, 1920))
+    y[y > 80] = 80
+    y[y <= 0] = 1e-3
+    return y
 
 
 class DepthDataLoader(object):
@@ -84,18 +110,29 @@ class DataLoadPreprocess(Dataset):
 
     def __getitem__(self, idx):
         sample_path = self.filenames[idx]
-        focal = float(sample_path.split()[2])
+        focal = 8
 
         if self.mode == 'train':
             if self.args.dataset == 'kitti' and self.args.use_right is True and random.random() > 0.5:
                 image_path = os.path.join(self.args.data_path, remove_leading_slash(sample_path.split()[3]))
                 depth_path = os.path.join(self.args.gt_path, remove_leading_slash(sample_path.split()[4]))
+            elif self.args.dataset == 'motsynth':
+                img_name, depth_name, _ = sample_path.split(' ')
+                image_path = Path(self.args.data_path) / 'frames' / img_name
+                depth_path = (Path(self.args.gt_path) / 'all' / depth_name.split('/')[0]
+                              / 'gt_depth' / depth_name.split('/')[1])
             else:
                 image_path = os.path.join(self.args.data_path, remove_leading_slash(sample_path.split()[0]))
                 depth_path = os.path.join(self.args.gt_path, remove_leading_slash(sample_path.split()[1]))
 
             image = Image.open(image_path)
-            depth_gt = Image.open(depth_path)
+            image = image.resize((self.args.input_width, self.args.input_height), Image.LANCZOS)
+            if self.args.dataset == 'motsynth':
+                depth_gt = load_motsynth_depth_image(str(depth_path))
+                depth_gt = cv2.resize(depth_gt, (self.args.input_width, self.args.input_height))
+            else:
+                depth_gt = Image.open(depth_path)
+                depth_gt = depth_gt.resize((self.args.input_width, self.args.input_height), Image.LANCZOS)
 
             if self.args.do_kb_crop is True:
                 height = image.height
@@ -110,7 +147,7 @@ class DataLoadPreprocess(Dataset):
                 depth_gt = depth_gt.crop((43, 45, 608, 472))
                 image = image.crop((43, 45, 608, 472))
 
-            if self.args.do_random_rotate is True:
+            if self.args.do_random_rotate is True and self.args.dataset != 'motsynth':
                 random_angle = (random.random() - 0.5) * 2 * self.args.degree
                 image = self.rotate_image(image, random_angle)
                 depth_gt = self.rotate_image(depth_gt, random_angle, flag=Image.NEAREST)
@@ -121,10 +158,17 @@ class DataLoadPreprocess(Dataset):
 
             if self.args.dataset == 'nyu':
                 depth_gt = depth_gt / 1000.0
+            elif self.args.dataset == 'motsynth':
+                depth_gt = depth_gt
             else:
                 depth_gt = depth_gt / 256.0
 
-            image, depth_gt = self.random_crop(image, depth_gt, self.args.input_height, self.args.input_width)
+            # import matplotlib.pyplot as plt
+            # plt.imshow(image)
+            # plt.show()
+            # plt.imshow(depth_gt)
+            # plt.show()
+            # image, depth_gt = self.random_crop(image, depth_gt, self.args.input_height, self.args.input_width)
             image, depth_gt = self.train_preprocess(image, depth_gt)
             sample = {'image': image, 'depth': depth_gt, 'focal': focal}
 
@@ -134,15 +178,31 @@ class DataLoadPreprocess(Dataset):
             else:
                 data_path = self.args.data_path
 
-            image_path = os.path.join(data_path, remove_leading_slash(sample_path.split()[0]))
-            image = np.asarray(Image.open(image_path), dtype=np.float32) / 255.0
+            if self.args.dataset == 'motsynth':
+                img_name, _, _ = sample_path.split(' ')
+                image_path = Path(data_path) / 'frames' / img_name
+            else:
+                image_path = os.path.join(data_path, remove_leading_slash(sample_path.split()[0]))
+            image = Image.open(image_path)
+            image = image.resize((self.args.input_width, self.args.input_height), Image.LANCZOS)
+            image = np.asarray(image, dtype=np.float32) / 255.0
 
             if self.mode == 'online_eval':
                 gt_path = self.args.gt_path_eval
-                depth_path = os.path.join(gt_path, remove_leading_slash(sample_path.split()[1]))
+                if self.args.dataset == 'motsynth':
+                    _, depth_name, _ = sample_path.split(' ')
+                    depth_path = (Path(self.args.gt_path) / 'all' / depth_name.split('/')[0]
+                                  / 'gt_depth' / depth_name.split('/')[1])
+                else:
+                    depth_path = os.path.join(gt_path, remove_leading_slash(sample_path.split()[1]))
                 has_valid_depth = False
                 try:
-                    depth_gt = Image.open(depth_path)
+                    if self.args.dataset == 'motsynth':
+                        depth_gt = load_motsynth_depth_image(str(depth_path))
+                        depth_gt = cv2.resize(depth_gt, (self.args.input_width, self.args.input_height))
+                    else:
+                        depth_gt = Image.open(depth_path)
+                        depth_gt = depth_gt.resize((self.args.input_width, self.args.input_height), Image.LANCZOS)
                     has_valid_depth = True
                 except IOError:
                     depth_gt = False
@@ -153,6 +213,8 @@ class DataLoadPreprocess(Dataset):
                     depth_gt = np.expand_dims(depth_gt, axis=2)
                     if self.args.dataset == 'nyu':
                         depth_gt = depth_gt / 1000.0
+                    elif self.args.dataset == 'motsynth':
+                        depth_gt = depth_gt
                     else:
                         depth_gt = depth_gt / 256.0
 

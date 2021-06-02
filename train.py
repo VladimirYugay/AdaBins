@@ -186,7 +186,7 @@ def train(model, args, epochs=10, experiment_name="DeepLab", lr=0.0001, root="."
 
             bin_edges, pred = model(img)
 
-            mask = depth > args.min_depth
+            mask = depth >= args.min_depth
             l_dense = criterion_ueff(pred, depth, mask=mask.to(torch.bool), interpolate=True)
 
             if args.w_chamfer > 0:
@@ -203,7 +203,7 @@ def train(model, args, epochs=10, experiment_name="DeepLab", lr=0.0001, root="."
                 wandb.log({f"Train/{criterion_bins.name}": l_chamfer.item()}, step=step)
 
             step += 1
-            scheduler.step()
+            # scheduler.step()
 
             ########################################################################################################
 
@@ -262,7 +262,8 @@ def validate(args, model, test_loader, criterion_ueff, epoch, epochs, device='cp
             pred[np.isnan(pred)] = args.min_depth_eval
 
             gt_depth = depth.squeeze().cpu().numpy()
-            valid_mask = np.logical_and(gt_depth > args.min_depth_eval, gt_depth < args.max_depth_eval)
+            valid_mask = np.logical_and(gt_depth >= args.min_depth_eval, gt_depth <= args.max_depth_eval)
+            eval_mask = None
             if args.garg_crop or args.eigen_crop:
                 gt_height, gt_width = gt_depth.shape
                 eval_mask = np.zeros(valid_mask.shape)
@@ -277,7 +278,8 @@ def validate(args, model, test_loader, criterion_ueff, epoch, epochs, device='cp
                         int(0.0359477 * gt_width):int(0.96405229 * gt_width)] = 1
                     else:
                         eval_mask[45:471, 41:601] = 1
-            valid_mask = np.logical_and(valid_mask, eval_mask)
+            if eval_mask is not None:
+                valid_mask = np.logical_and(valid_mask, eval_mask)
             metrics.update(utils.compute_errors(gt_depth[valid_mask], pred[valid_mask]))
 
         return metrics.get_value(), val_si
@@ -297,9 +299,9 @@ if __name__ == '__main__':
                                      conflict_handler='resolve')
     parser.convert_arg_line_to_args = convert_arg_line_to_args
     parser.add_argument('--epochs', default=25, type=int, help='number of total epochs to run')
-    parser.add_argument('--n-bins', '--n_bins', default=80, type=int,
+    parser.add_argument('--n-bins', '--n_bins', default=256, type=int,
                         help='number of bins/buckets to divide depth range into')
-    parser.add_argument('--lr', '--learning-rate', default=0.000357, type=float, help='max learning rate')
+    parser.add_argument('--lr', '--learning-rate', default=0.001, type=float, help='max learning rate')
     parser.add_argument('--wd', '--weight-decay', default=0.1, type=float, help='weight decay')
     parser.add_argument('--w_chamfer', '--w-chamfer', default=0.1, type=float, help="weight value for chamfer loss")
     parser.add_argument('--div-factor', '--div_factor', default=25, type=float, help="Initial div factor for lr")
@@ -312,9 +314,9 @@ if __name__ == '__main__':
     parser.add_argument("--name", default="UnetAdaptiveBins")
     parser.add_argument("--norm", default="linear", type=str, help="Type of norm/competition for bin-widths",
                         choices=['linear', 'softmax', 'sigmoid'])
-    parser.add_argument("--same-lr", '--same_lr', default=False, action="store_true",
+    parser.add_argument("--same-lr", '--same_lr', default=True, action="store_true",
                         help="Use same LR for all param groups")
-    parser.add_argument("--distributed", default=True, action="store_true", help="Use DDP if set")
+    parser.add_argument("--distributed", default=False, action="store_true", help="Use DDP if set")
     parser.add_argument("--root", default=".", type=str,
                         help="Root folder to save data in")
     parser.add_argument("--resume", default='', type=str, help="Resume from checkpoint")
@@ -323,20 +325,20 @@ if __name__ == '__main__':
     parser.add_argument("--tags", default='sweep', type=str, help="Wandb tags")
 
     parser.add_argument("--workers", default=11, type=int, help="Number of workers for data loading")
-    parser.add_argument("--dataset", default='nyu', type=str, help="Dataset to train on")
+    parser.add_argument("--dataset", default='motsynth', type=str, help="Dataset to train on")
 
-    parser.add_argument("--data_path", default='../dataset/nyu/sync/', type=str,
+    parser.add_argument("--data_path", default='../../datasets/MOTSynth', type=str,
                         help="path to dataset")
-    parser.add_argument("--gt_path", default='../dataset/nyu/sync/', type=str,
+    parser.add_argument("--gt_path", default='../../datasets/MOTSynth_annotations', type=str,
                         help="path to dataset")
 
     parser.add_argument('--filenames_file',
-                        default="./train_test_inputs/nyudepthv2_train_files_with_gt.txt",
+                        default="./train_test_inputs/test_motsynth_train.txt",
                         type=str, help='path to the filenames text file')
 
-    parser.add_argument('--input_height', type=int, help='input height', default=416)
-    parser.add_argument('--input_width', type=int, help='input width', default=544)
-    parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=10)
+    parser.add_argument('--input_height', type=int, help='input height', default=480)
+    parser.add_argument('--input_width', type=int, help='input width', default=640)
+    parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=80)
     parser.add_argument('--min_depth', type=float, help='minimum depth in estimation', default=1e-3)
 
     parser.add_argument('--do_random_rotate', default=True,
@@ -348,17 +350,17 @@ if __name__ == '__main__':
                         action='store_true')
 
     parser.add_argument('--data_path_eval',
-                        default="../dataset/nyu/official_splits/test/",
+                        default='../../datasets/MOTSynth',
                         type=str, help='path to the data for online evaluation')
-    parser.add_argument('--gt_path_eval', default="../dataset/nyu/official_splits/test/",
+    parser.add_argument('--gt_path_eval', default='../../datasets/MOTSynth_annotations',
                         type=str, help='path to the groundtruth data for online evaluation')
     parser.add_argument('--filenames_file_eval',
-                        default="./train_test_inputs/nyudepthv2_test_files_with_gt.txt",
+                        default="./train_test_inputs/test_motsynth_test.txt",
                         type=str, help='path to the filenames text file for online evaluation')
 
     parser.add_argument('--min_depth_eval', type=float, help='minimum depth for evaluation', default=1e-3)
-    parser.add_argument('--max_depth_eval', type=float, help='maximum depth for evaluation', default=10)
-    parser.add_argument('--eigen_crop', default=True, help='if set, crops according to Eigen NIPS14',
+    parser.add_argument('--max_depth_eval', type=float, help='maximum depth for evaluation', default=80)
+    parser.add_argument('--eigen_crop', default=False, help='if set, crops according to Eigen NIPS14',
                         action='store_true')
     parser.add_argument('--garg_crop', help='if set, crops according to Garg  ECCV16', action='store_true')
 
