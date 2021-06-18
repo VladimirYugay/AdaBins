@@ -46,7 +46,7 @@ def load_motsynth_depth_image(img_path):
     depth.dtype = 'float32'
     y = (-(n * f) / (n - f)) / (depth - (n / (n - f)))
     y = y.reshape((1080, 1920))
-    y[y > 80] = 80
+    y[y > 80] = 100
     y[y <= 0] = 1e-3
     return y
 
@@ -120,7 +120,7 @@ class DataLoadPreprocess(Dataset):
                 img_name, depth_name, _ = sample_path.split(' ')
                 image_path = Path(self.args.data_path) / 'frames' / img_name
                 depth_path = (Path(self.args.gt_path) / 'all' / depth_name.split('/')[0]
-                              / 'gt_depth' / depth_name.split('/')[1])
+                              / 'gt_depth_new' / depth_name.split('/')[1])
             else:
                 image_path = os.path.join(self.args.data_path, remove_leading_slash(sample_path.split()[0]))
                 depth_path = os.path.join(self.args.gt_path, remove_leading_slash(sample_path.split()[1]))
