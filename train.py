@@ -72,6 +72,9 @@ def main_worker(gpu, ngpus_per_node, args):
 
     model = models.UnetAdaptiveBins.build(n_bins=args.n_bins, min_val=args.min_depth, max_val=args.max_depth,
                                           norm=args.norm)
+    if args.pretrained_path != '':
+        print("Loading pre-trained weights")
+        model, _, _ = model_io.load_checkpoint(args.pretrained_path, model)
 
     ################################################################################################
 
@@ -363,6 +366,7 @@ if __name__ == '__main__':
     parser.add_argument('--eigen_crop', default=False, help='if set, crops according to Eigen NIPS14',
                         action='store_true')
     parser.add_argument('--garg_crop', help='if set, crops according to Garg  ECCV16', action='store_true')
+    parser.add_argument("--pretrained_path", default='', type=str, help="path to pretrained weights to load")
 
     if sys.argv.__len__() == 2:
         arg_filename_with_prefix = '@' + sys.argv[1]
