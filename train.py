@@ -341,7 +341,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--input_height', type=int, help='input height', default=480)
     parser.add_argument('--input_width', type=int, help='input width', default=640)
-    parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=80)
+    parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=100)
     parser.add_argument('--min_depth', type=float, help='minimum depth in estimation', default=1e-3)
 
     parser.add_argument('--do_random_rotate', default=True,
