@@ -192,7 +192,7 @@ class DataLoadPreprocess(Dataset):
                 if self.args.dataset == 'motsynth':
                     _, depth_name, _ = sample_path.split(' ')
                     depth_path = (Path(self.args.gt_path) / 'all' / depth_name.split('/')[0]
-                                  / 'gt_depth' / depth_name.split('/')[1])
+                                  / 'gt_depth_new' / depth_name.split('/')[1])
                 else:
                     depth_path = os.path.join(gt_path, remove_leading_slash(sample_path.split()[1]))
                 has_valid_depth = False
