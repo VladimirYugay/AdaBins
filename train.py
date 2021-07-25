@@ -22,7 +22,7 @@ from dataloader import DepthDataLoader
 from loss import SILogLoss, BinsChamferLoss
 from utils import RunningAverage, colorize
 
-os.environ['WANDB_MODE'] = 'dryrun'
+# os.environ['WANDB_MODE'] = 'dryrun'
 PROJECT = "MDE-AdaBins"
 logging = True
 
@@ -60,9 +60,9 @@ def log_images(img, depth, pred, args, step):
     pred = colorize(pred, vmin=args.min_depth, vmax=args.max_depth)
     wandb.log(
         {
-            "Input": [wandb.Image(img)],
             "GT": [wandb.Image(depth)],
-            "Prediction": [wandb.Image(pred)]
+            "Prediction": [wandb.Image(pred)],
+            "Input": [wandb.Image(img)]
         }, step=step)
 
 
@@ -245,8 +245,8 @@ def validate(args, model, test_loader, criterion_ueff, epoch, epochs, device='cp
         val_si = RunningAverage()
         # val_bins = RunningAverage()
         metrics = utils.RunningAverageDict()
-        for batch in tqdm(test_loader, desc=f"Epoch: {epoch + 1}/{epochs}. Loop: Validation") if is_rank_zero(
-                args) else test_loader:
+        for i, batch in enumerate(tqdm(test_loader, desc=f"Epoch: {epoch + 1}/{epochs}. Loop: Validation")) if is_rank_zero(
+                args) else enumerate(test_loader):
             img = batch['image'].to(device)
             depth = batch['depth'].to(device)
             if 'has_valid_depth' in batch:
@@ -254,6 +254,14 @@ def validate(args, model, test_loader, criterion_ueff, epoch, epochs, device='cp
                     continue
             depth = depth.squeeze().unsqueeze(0).unsqueeze(0)
             bins, pred = model(img)
+
+            if i == 0:
+                for img_id in range(args.batch_size):
+                    log_images(
+                        np.moveaxis(img[img_id, ].detach().cpu().numpy(), 0, -1),
+                        np.moveaxis(depth[img_id, ].detach().cpu().numpy(), 0, -1),
+                        np.moveaxis(pred[img_id, ].detach().cpu().numpy(), 0, -1),
+                        args, epoch)
 
             mask = depth > args.min_depth
             l_dense = criterion_ueff(pred, depth, mask=mask.to(torch.bool), interpolate=True)
