@@ -211,30 +211,26 @@ def train(model, args, epochs=10, experiment_name="DeepLab", lr=0.0001, root="."
 
             ########################################################################################################
 
-            if should_write and (epoch + 1) % args.validate_every == 0:
+        if (epoch + 1) % args.validate_every == 0:
 
-                ################################# Validation loop ##################################################
-                model.eval()
-                metrics, val_si = validate(args, model, test_loader, criterion_ueff, epoch, epochs, device)
+            ################################# Validation loop ##################################################
+            model.eval()
+            metrics, val_si = validate(args, model, test_loader, criterion_ueff, epoch, epochs, device)
 
-                # print("Validated: {}".format(metrics))
-                if should_log:
-                    wandb.log({
-                        f"Test/{criterion_ueff.name}": val_si.get_value(),
-                        # f"Test/{criterion_bins.name}": val_bins.get_value()
-                    }, step=step)
+            wandb.log({
+                f"Test/{criterion_ueff.name}": val_si.get_value(),
+            }, step=step)
 
-                    wandb.log({f"Metrics/{k}": v for k, v in metrics.items()}, step=step)
-                    model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{run_id}_latest.pt",
-                                             root=os.path.join(root, "checkpoints"))
+            wandb.log({f"Metrics/{k}": v for k, v in metrics.items()}, step=step)
 
-                if metrics['abs_rel'] < best_loss and should_write:
-                    model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{run_id}_best.pt",
-                                             root=os.path.join(root, "checkpoints"))
-                    best_loss = metrics['abs_rel']
-                model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{epoch}.pt",
+            if metrics['abs_rel'] < best_loss and should_write:
+                model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{run_id}_best.pt",
                                          root=os.path.join(root, "checkpoints"))
-                model.train()
+                best_loss = metrics['abs_rel']
+
+            model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{epoch}.pt",
+                                     root=os.path.join(root, "checkpoints"))
+            model.train()
                 #################################################################################################
 
     return model
