@@ -24,27 +24,21 @@ if __name__ == "__main__":
     train_val_seqs = [seq for seq in all_seqs if seq not in test_seqs]
 
     assert not bool(set(train_val_seqs) & set(test_seqs))
-    
-    train_num = int(len(train_val_seqs) * 0.8)
-    print("Number of training seqs: {}, number of validation seqs: {}".format(train_num, len(train_val_seqs) - train_num))
-    train_seqs = random.sample(train_val_seqs, train_num)
-    val_seqs = [seq for seq in train_val_seqs if seq not in train_seqs]
-
-    assert not bool(set(train_seqs) & set(val_seqs))
 
     output_path = Path(args.output_path)
     output_path.mkdir(parents=True, exist_ok=True)
     
     frame_ids = [i for i in range(1800)]  # every sequence has 1800 frames 
+    offset = 5 
 
     with open(str(output_path / 'motsynth_train.txt'), 'w') as file:
-        for seq in train_seqs:
-            ids = random.sample(frame_ids, 360)
-            for idx in ids:
-                print("{}/{}.jpg {}/{}.png".format(seq, idx, seq, idx), file=file)
+        for seq in train_val_seqs:
+            for idx in frame_ids:
+                if idx % offset == 0 and idx - offset > 0 and idx + 2 * offset < 1800: 
+                    print("{}/{}.jpg {}/{}.png".format(seq, idx, seq, idx), file=file)
     
     with open(str(output_path / 'motsynth_test.txt'), 'w') as file:
         for seq in test_seqs:
-            ids = random.sample(frame_ids, 360)
-            for idx in ids:
-                print("{}/{}.jpg {}/{}.png".format(seq, idx, seq, idx), file=file)
+            for idx in frame_ids:
+                if idx % offset == 0 and idx - offset > 0 and idx + 2 * offset < 1800:
+                    print("{}/{}.jpg {}/{}.png".format(seq, idx, seq, idx), file=file)
