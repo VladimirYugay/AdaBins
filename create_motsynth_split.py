@@ -35,10 +35,12 @@ if __name__ == "__main__":
         for seq in train_val_seqs:
             for idx in frame_ids:
                 if idx % offset == 0 and idx - offset > 0 and idx + 2 * offset < 1800: 
-                    print("{}/{}.jpg {}/{}.png".format(seq, idx, seq, idx), file=file)
+                    idx = "{:0>4d}".format(idx)
+                    print("{}/{}.jpg {}/{}.png None".format(seq, idx, seq, idx), file=file)
     
     with open(str(output_path / 'motsynth_test.txt'), 'w') as file:
         for seq in test_seqs:
             for idx in frame_ids:
                 if idx % offset == 0 and idx - offset > 0 and idx + 2 * offset < 1800:
-                    print("{}/{}.jpg {}/{}.png".format(seq, idx, seq, idx), file=file)
+                    idx = "{:0>4d}".format(idx)
+                    print("{}/{}.jpg {}/{}.png None".format(seq, idx, seq, idx), file=file)
