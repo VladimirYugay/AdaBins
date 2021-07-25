@@ -4,6 +4,7 @@ import sys
 import uuid
 from datetime import datetime as dt
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.distributed as dist
@@ -21,7 +22,7 @@ from dataloader import DepthDataLoader
 from loss import SILogLoss, BinsChamferLoss
 from utils import RunningAverage, colorize
 
-# os.environ['WANDB_MODE'] = 'dryrun'
+os.environ['WANDB_MODE'] = 'dryrun'
 PROJECT = "MDE-AdaBins"
 logging = True
 
@@ -210,7 +211,7 @@ def train(model, args, epochs=10, experiment_name="DeepLab", lr=0.0001, root="."
 
             ########################################################################################################
 
-            if should_write and step % args.validate_every == 0:
+            if should_write and (epoch + 1) % args.validate_every == 0:
 
                 ################################# Validation loop ##################################################
                 model.eval()
@@ -231,6 +232,8 @@ def train(model, args, epochs=10, experiment_name="DeepLab", lr=0.0001, root="."
                     model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{run_id}_best.pt",
                                              root=os.path.join(root, "checkpoints"))
                     best_loss = metrics['abs_rel']
+                model_io.save_checkpoint(model, optimizer, epoch, f"{experiment_name}_{epoch}.pt",
+                                         root=os.path.join(root, "checkpoints"))
                 model.train()
                 #################################################################################################
 
@@ -341,7 +344,7 @@ if __name__ == '__main__':
 
     parser.add_argument('--input_height', type=int, help='input height', default=480)
     parser.add_argument('--input_width', type=int, help='input width', default=640)
-    parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=100)
+    parser.add_argument('--max_depth', type=float, help='maximum depth in estimation', default=50)
     parser.add_argument('--min_depth', type=float, help='minimum depth in estimation', default=1e-3)
 
     parser.add_argument('--do_random_rotate', default=True,
@@ -362,7 +365,7 @@ if __name__ == '__main__':
                         type=str, help='path to the filenames text file for online evaluation')
 
     parser.add_argument('--min_depth_eval', type=float, help='minimum depth for evaluation', default=1e-3)
-    parser.add_argument('--max_depth_eval', type=float, help='maximum depth for evaluation', default=80)
+    parser.add_argument('--max_depth_eval', type=float, help='maximum depth for evaluation', default=50)
     parser.add_argument('--eigen_crop', default=False, help='if set, crops according to Eigen NIPS14',
                         action='store_true')
     parser.add_argument('--garg_crop', help='if set, crops according to Garg  ECCV16', action='store_true')

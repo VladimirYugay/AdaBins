@@ -12,6 +12,9 @@ import model_io
 import utils
 from models import UnetAdaptiveBins
 
+import matplotlib.pyplot as plt
+from time import time
+from dataloader import load_motsynth_depth_image
 
 def _is_pil_image(img):
     return isinstance(img, Image.Image)
@@ -64,7 +67,7 @@ class ToTensor(object):
 
 
 class InferenceHelper:
-    def __init__(self, dataset='nyu', device='cuda:0'):
+    def __init__(self, dataset='motsynth', device='cuda:0', pretrained_path="./pretrained/AdaBins_nyu.pt"):
         self.toTensor = ToTensor()
         self.device = device
         if dataset == 'nyu':
@@ -72,13 +75,16 @@ class InferenceHelper:
             self.max_depth = 10
             self.saving_factor = 1000  # used to save in 16 bit
             model = UnetAdaptiveBins.build(n_bins=256, min_val=self.min_depth, max_val=self.max_depth)
-            pretrained_path = "./pretrained/AdaBins_nyu.pt"
         elif dataset == 'kitti':
             self.min_depth = 1e-3
             self.max_depth = 80
             self.saving_factor = 256
             model = UnetAdaptiveBins.build(n_bins=256, min_val=self.min_depth, max_val=self.max_depth)
-            pretrained_path = "./pretrained/AdaBins_kitti.pt"
+        elif dataset == 'motsynth':
+            self.min_depth = 1e-3
+            self.max_depth = 100
+            self.saving_factor = 256
+            model = UnetAdaptiveBins.build(n_bins=256, min_val=self.min_depth, max_val=self.max_depth)
         else:
             raise ValueError("dataset can be either 'nyu' or 'kitti' but got {}".format(dataset))
 
@@ -88,7 +94,7 @@ class InferenceHelper:
 
     @torch.no_grad()
     def predict_pil(self, pil_image, visualized=False):
-        # pil_image = pil_image.resize((640, 480))
+        pil_image = pil_image.resize((640, 480))
         img = np.asarray(pil_image) / 255.
 
         img = self.toTensor(img).unsqueeze(0).float().to(self.device)
@@ -149,13 +155,20 @@ class InferenceHelper:
 
 
 if __name__ == '__main__':
-    import matplotlib.pyplot as plt
-    from time import time
 
-    img = Image.open("test_imgs/classroom__rgb_00283.jpg")
+    import cv2
+
+    gt = load_motsynth_depth_image('test_imgs/gt_0000.png')
+    depth_gt = cv2.resize(gt, (640, 480))
+
+    img = Image.open("test_imgs/0000.jpg")
     start = time()
-    inferHelper = InferenceHelper()
-    centers, pred = inferHelper.predict_pil(img)
+    inferHelper = InferenceHelper(pretrained_path='checkpoints/test_99.pt')
+    centers, pred = inferHelper.predict_pil(img, visualized=False)
+
     print(f"took :{time() - start}s")
-    plt.imshow(pred.squeeze(), cmap='magma_r')
+
+    f, axis = plt.subplots(1, 2)
+    axis[0].imshow(pred.squeeze(), cmap='magma_r')
+    axis[1].imshow(depth_gt, cmap='magma_r')
     plt.show()
