@@ -251,13 +251,12 @@ def validate(args, model, test_loader, criterion_ueff, epoch, epochs, device='cp
             depth = depth.squeeze().unsqueeze(0).unsqueeze(0)
             bins, pred = model(img)
 
-            if i == 0:
-                for img_id in range(args.batch_size):
-                    log_images(
-                        np.moveaxis(img[img_id, ].detach().cpu().numpy(), 0, -1),
-                        np.moveaxis(depth[img_id, ].detach().cpu().numpy(), 0, -1),
-                        np.moveaxis(pred[img_id, ].detach().cpu().numpy(), 0, -1),
-                        args, epoch)
+            if i < 3:  # log first images
+                log_images(
+                    np.moveaxis(img[0, ].detach().cpu().numpy(), 0, -1),
+                    np.moveaxis(depth[0, ].detach().cpu().numpy(), 0, -1),
+                    np.moveaxis(pred[0, ].detach().cpu().numpy(), 0, -1),
+                    args, epoch)
 
             mask = depth > args.min_depth
             l_dense = criterion_ueff(pred, depth, mask=mask.to(torch.bool), interpolate=True)
