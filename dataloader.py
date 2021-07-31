@@ -277,7 +277,8 @@ class DataLoadPreprocess(Dataset):
         """ Adds mirroring surface effect as in MOTS """
         height, width, _ = img.shape
         flipped_img = np.zeros_like(img)
-        flipped_img[2 * height // 3:, ...] = img[::-1, :, :][height // 3: 2 * height // 3, ...]
+        factor = np.random.choice([2, 3])
+        flipped_img[2 * height // factor:, ...] = img[::-1, :, :][height // factor: 2 * height // factor, ...]
         alpha = 0.7
         blend_img = alpha * img + (1 - alpha) * flipped_img
         return blend_img

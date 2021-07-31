@@ -9,8 +9,9 @@ img = Image.open(img_path)
 img = np.asarray(img, dtype=np.float32) / 255.0
 height, width, _ = img.shape
 
+factor = np.random.choice([2, 3])
 flipped_img = np.zeros_like(img)
-flipped_img[2 * height // 3:, ...] = img[::-1, :, :][height // 3: 2 * height // 3, ...]
+flipped_img[2 * height // factor:, ...] = img[::-1, :, :][height // factor: 2 * height // factor, ...]
 
 alpha = 0.7
 blend_img = alpha * img + (1 - alpha) * flipped_img
