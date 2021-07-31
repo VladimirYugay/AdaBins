@@ -94,7 +94,7 @@ class InferenceHelper:
 
     @torch.no_grad()
     def predict_pil(self, pil_image, visualized=False):
-        pil_image = pil_image.resize((640, 480))
+        pil_image = pil_image.resize((960, 576))
         img = np.asarray(pil_image) / 255.
 
         img = self.toTensor(img).unsqueeze(0).float().to(self.device)
@@ -158,17 +158,18 @@ if __name__ == '__main__':
 
     import cv2
 
-    gt = load_motsynth_depth_image('test_imgs/gt_0000.png')
-    depth_gt = cv2.resize(gt, (640, 480))
+    gt = load_motsynth_depth_image('test_imgs/0000.jpg')
+    depth_gt = cv2.resize(gt, (480, 288))
 
-    img = Image.open("test_imgs/0000.jpg")
+    img = Image.open("test_imgs/mots_11.jpg")
     start = time()
-    inferHelper = InferenceHelper(pretrained_path='checkpoints/test_99.pt')
+    inferHelper = InferenceHelper(pretrained_path='checkpoints/adabins_for_motsynth_26-Jul_10-10-nodebs24-tep50-lr0.001-wd0.1-168fdc99-fb60-4c00-92a7-1d47a01a3b65_best.pt')
     centers, pred = inferHelper.predict_pil(img, visualized=False)
-
+    print(pred.shape)
+    np.savez_compressed('kek', pred[0, 0, ...])
     print(f"took :{time() - start}s")
 
-    f, axis = plt.subplots(1, 2)
-    axis[0].imshow(pred.squeeze(), cmap='magma_r')
-    axis[1].imshow(depth_gt, cmap='magma_r')
-    plt.show()
+    # f, axis = plt.subplots(1, 2)
+    # plt.imshow(pred.squeeze(), cmap='magma_r')
+    # axis[1].imshow(depth_gt, cmap='magma_r')
+    # plt.show()
