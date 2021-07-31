@@ -265,7 +265,22 @@ class DataLoadPreprocess(Dataset):
         if do_augment > 0.5:
             image = self.augment_image(image)
 
+        # Mirror augmentation
+        do_mirror_aug = random.random()
+        if do_mirror_aug > 0.8:
+            image = DataLoadPreprocess.mirror_augmentation(image)
+
         return image, depth_gt
+
+    @staticmethod
+    def mirror_augmentation(img):
+        """ Adds mirroring surface effect as in MOTS """
+        height, width, _ = img.shape
+        flipped_img = np.zeros_like(img)
+        flipped_img[2 * height // 3:, ...] = img[::-1, :, :][height // 3: 2 * height // 3, ...]
+        alpha = 0.7
+        blend_img = alpha * img + (1 - alpha) * flipped_img
+        return blend_img
 
     def augment_image(self, image):
         # gamma augmentation
