@@ -24,10 +24,6 @@ def parse_args():
                         help='Path to the file with sequences names')
     parser.add_argument('--model_path', type=str,
                         help='name of a pretrained model to use')
-    parser.add_argument('--img_width', default=640,
-                        help='input image width')
-    parser.add_argument('--img_height', default=480,
-                        help='input image height')
 
     return parser.parse_args()
 
@@ -61,7 +57,6 @@ def test_simple(args):
             for img_path in sorted(seq_path.glob('*')):
                 # Load image and preprocess
                 input_image = pil.open(str(img_path)).convert('RGB')
-                input_image = input_image.resize((args.img_width, args.img_height), pil.LANCZOS)
                 _, depth = inferHelper.predict_pil(input_image, visualized=False)
                 depth = depth[0, 0, ...]
                 depth_file_name = str(img_path.parts[-1]).split('.')[0]
