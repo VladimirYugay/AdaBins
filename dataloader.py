@@ -277,7 +277,11 @@ class DataLoadPreprocess(Dataset):
         """ Adds mirroring surface effect as in MOTS """
         height, width, _ = img.shape
         flipped_img = np.zeros_like(img)
-        factor = np.random.choice([2, 3])
+        factor = np.random.choice([2, 3], p=(0.3, 0.7))  # we have less scenes with half scene mixed in motsynth
+        if factor == 3:
+            flipped_img[2 * height // factor:, ...] = img[::-1, :, :][height // factor: 2 * height // factor, ...]
+        else:
+            flipped_img[height // factor:, ...] = img[::-1, :, :][height // factor:, ...]
         flipped_img[2 * height // factor:, ...] = img[::-1, :, :][height // factor: 2 * height // factor, ...]
         alpha = 0.7
         blend_img = alpha * img + (1 - alpha) * flipped_img
@@ -291,6 +295,8 @@ class DataLoadPreprocess(Dataset):
         # brightness augmentation
         if self.args.dataset == 'nyu':
             brightness = random.uniform(0.75, 1.25)
+        elif self.args.dataset == 'motsynth':
+            brightness = random.uniform(0.7, 1.7)
         else:
             brightness = random.uniform(0.9, 1.1)
         image_aug = image_aug * brightness
