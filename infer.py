@@ -1,6 +1,8 @@
 import glob
 import os
+from pathlib import Path
 
+import matplotlib.pyplot as plt
 import numpy as np
 import torch
 import torch.nn as nn
@@ -12,9 +14,6 @@ import model_io
 import utils
 from models import UnetAdaptiveBins
 
-import matplotlib.pyplot as plt
-from time import time
-from dataloader import load_motsynth_depth_image
 
 def _is_pil_image(img):
     return isinstance(img, Image.Image)
@@ -93,8 +92,8 @@ class InferenceHelper:
         self.model = model.to(self.device)
 
     @torch.no_grad()
-    def predict_pil(self, pil_image, visualized=False):
-        pil_image = pil_image.resize((960, 576))
+    def predict_pil(self, pil_image, visualized=False, img_size=(960, 576)):
+        pil_image = pil_image.resize(img_size)
         img = np.asarray(pil_image) / 255.
 
         img = self.toTensor(img).unsqueeze(0).float().to(self.device)
@@ -155,21 +154,16 @@ class InferenceHelper:
 
 
 if __name__ == '__main__':
+    path = "checkpoints/vladimir_depth/vlad_depth.pt"
+    img_size = (960, 576)
+    inferHelper = InferenceHelper(pretrained_path=path)
+    test_img_names = sorted([str(p) for p in Path('test_imgs').glob('*')])
+    output_path = Path('test_outputs')
+    output_path.mkdir(parents=True, exist_ok=True)
+    for tin in test_img_names:
+        print("Processing", tin)
+        img = Image.open(tin)
+        centers, pred = inferHelper.predict_pil(img, visualized=False, img_size=img_size)
+        plt.imshow(pred.squeeze(), cmap='magma_r')
+        plt.savefig(str(output_path / tin.split('/')[-1]))
 
-    import cv2
-
-    gt = load_motsynth_depth_image('test_imgs/0000.jpg')
-    depth_gt = cv2.resize(gt, (480, 288))
-
-    img = Image.open("test_imgs/mots_11.jpg")
-    start = time()
-    inferHelper = InferenceHelper(pretrained_path='checkpoints/adabins_for_motsynth_26-Jul_10-10-nodebs24-tep50-lr0.001-wd0.1-168fdc99-fb60-4c00-92a7-1d47a01a3b65_best.pt')
-    centers, pred = inferHelper.predict_pil(img, visualized=False)
-    print(pred.shape)
-    np.savez_compressed('kek', pred[0, 0, ...])
-    print(f"took :{time() - start}s")
-
-    # f, axis = plt.subplots(1, 2)
-    # plt.imshow(pred.squeeze(), cmap='magma_r')
-    # axis[1].imshow(depth_gt, cmap='magma_r')
-    # plt.show()
