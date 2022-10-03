@@ -21,9 +21,7 @@ if __name__ == "__main__":
     with open(str(Path(args.test_file_path)), 'r') as file:
         test_seqs = sorted(["{:03d}".format(int(line.strip())) for line in file.readlines()])
 
-    train_val_seqs = [seq for seq in all_seqs if seq not in test_seqs]
-
-    assert not bool(set(train_val_seqs) & set(test_seqs))
+    train_val_seqs = sorted([seq for seq in all_seqs if seq not in test_seqs])
 
     output_path = Path(args.output_path)
     output_path.mkdir(parents=True, exist_ok=True)
