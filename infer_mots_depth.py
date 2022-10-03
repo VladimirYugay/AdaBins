@@ -6,6 +6,7 @@ from pathlib import Path
 import numpy as np
 import PIL.Image as pil
 import torch
+from tqdm import tqdm
 
 from infer import InferenceHelper
 
@@ -41,18 +42,18 @@ def test_simple(args):
     data_path = Path(args.data_path)
 
     for seq_path in sorted(data_path.glob('*')):
-        output_seq_path = output_path / seq_path.parts[-1] / model_name
+        output_seq_path = output_path / 'test' / seq_path.parts[-1]
         output_seq_path.mkdir(parents=True, exist_ok=True)
         print("Processing sequence:", seq_path.parts[-1])
         with torch.no_grad():
-            for img_path in sorted(seq_path.glob('*')):
+            for img_path in tqdm(sorted((seq_path / 'img1').glob('*'))):
                 # Load image and preprocess
                 input_image = pil.open(str(img_path)).convert('RGB')
-                _, depth = inferHelper.predict_pil(input_image, visualized=False)
+                resize_size = input_image.size if max(input_image.size) < 960 else (960, 576)
+                _, depth = inferHelper.predict_pil(input_image, visualized=False, img_size=resize_size)
                 depth = depth[0, 0, ...]
                 depth_file_name = str(img_path.parts[-1]).split('.')[0]
                 np.savez_compressed(str(output_seq_path / depth_file_name), depth)
-
 
 if __name__ == '__main__':
     args = parse_args()
