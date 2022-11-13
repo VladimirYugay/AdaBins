@@ -37,7 +37,6 @@ def test_simple(args):
 
     inferHelper = InferenceHelper(pretrained_path=args.model_path)
     inferHelper.device = device
-    model_name = str(Path(args.model_path).parts[-1])
     output_path = Path(args.output_path)
     data_path = Path(args.data_path)
 
@@ -54,6 +53,7 @@ def test_simple(args):
                 depth = depth[0, 0, ...]
                 depth_file_name = str(img_path.parts[-1]).split('.')[0]
                 np.savez_compressed(str(output_seq_path / depth_file_name), depth)
+
 
 if __name__ == '__main__':
     args = parse_args()

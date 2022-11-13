@@ -1,13 +1,11 @@
 from __future__ import absolute_import, division, print_function
 
 import argparse
-import os
 from pathlib import Path
 
 import numpy as np
 import PIL.Image as pil
 import torch
-from torchvision import transforms
 
 from infer import InferenceHelper
 
