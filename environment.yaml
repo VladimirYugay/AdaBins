@@ -10,10 +10,7 @@ dependencies:
   - fvcore
   - iopath
   - nvidiacub
-  - ipython
+  - jupyter
   - pytorch3d
-  - matplotlib
   - wandb
-  - scipy
-  - opencv
-  - trimesh
+prefix: /usr/stud/yugay/anaconda3/envs/adabins
