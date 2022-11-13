@@ -1,6 +1,6 @@
 # AdaBins
 
-Implementation of depth model for Quo Vadis: [**Is Trajectory Forecasting the Key Towards Long-Term Multi-Object Tracking?**](https://arxiv.org/pdf/2210.07681.pdf)
+Implementation of the depth model for Quo Vadis: [**Is Trajectory Forecasting the Key Towards Long-Term Multi-Object Tracking?**](https://arxiv.org/pdf/2210.07681.pdf)
 
 The implementation is based on [AdaBins](https://github.com/shariqfarooq123/AdaBins). The model is trained on a huge pedestrian synthetic dataset (MOTSynth) designed for monocular multi-object tracking. It supports images of a higher resolution, and has a custom data augmentation for simulating mirroring surfaces.
 
