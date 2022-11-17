@@ -6,6 +6,7 @@ from inference_helper import InferenceHelper
 from PIL import Image
 
 
+
 def infer_depth(model_path: str, input_path: str, output_path: str, img_size: tuple = (960, 576)):
     inferHelper = InferenceHelper(pretrained_path=model_path)
     test_img_names = sorted([str(p) for p in Path(input_path).glob('*')])

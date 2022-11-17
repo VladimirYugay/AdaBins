@@ -9,14 +9,14 @@ from PIL import Image
 from torchvision import transforms
 from tqdm import tqdm
 
-import model_io
-import utils
+
 
 # We have to do it since in the original repo there was no proper project structure
 CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(CURRENT_DIR))
 from models import UnetAdaptiveBins
 
+from model_io import load_checkpoint 
 
 def _is_pil_image(img):
     return isinstance(img, Image.Image)
@@ -71,7 +71,9 @@ class ToTensor(object):
 class InferenceHelper:
     def __init__(self, dataset='motsynth', device='cuda:0', pretrained_path="./pretrained/AdaBins_nyu.pt"):
         self.toTensor = ToTensor()
-        self.device = device
+        if not torch.cuda.is_available():
+            self.device = "cpu"
+        else: self.device = device
         if dataset == 'nyu':
             self.min_depth = 1e-3
             self.max_depth = 10
@@ -90,7 +92,7 @@ class InferenceHelper:
         else:
             raise ValueError("dataset can be either 'nyu' or 'kitti' but got {}".format(dataset))
 
-        model, _, _ = model_io.load_checkpoint(pretrained_path, model)
+        model, _, _ = load_checkpoint(pretrained_path, model)
         model.eval()
         self.model = model.to(self.device)
 
