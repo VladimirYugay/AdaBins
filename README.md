@@ -9,12 +9,15 @@ The implementation is based on [AdaBins](https://github.com/shariqfarooq123/AdaB
 * You can download the MOTSynth dataset [here](https://motchallenge.net/data/MOTSynth-MOT-CVPR22/)
 
 ## Setting things up
-
+Conda:
 ```
 conda env create --name adabins --file=environment.yml
 conda activate adabins
 ```
-
+Pip:
+```
+pip install -r requirements.txt
+```
 ## Inference
 
 In `scripts` there are scripts for inferences on a single image, as well as on `MOTSynth`, `MOTS` datasets. 
