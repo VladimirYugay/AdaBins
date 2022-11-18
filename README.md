@@ -22,7 +22,7 @@ In `scripts` there are scripts for inferences on a single image, as well as on `
 To run inference on a folder of images:
 
 ```
-python scripts/infer.py --model_path checkpoints/vladimir_depth/<model_name>.pt --input_path <images_dir> --output_path <output_dir>
+python scripts/infer.py --model_path <checkpoint_path_pt> --input_path <images_dir> --output_path <output_dir>
 ```
 
 To run training on MOTSynth dataset:
