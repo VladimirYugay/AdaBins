@@ -8,7 +8,7 @@ import PIL.Image as pil
 import torch
 from tqdm import tqdm
 
-from infer import InferenceHelper
+from scripts.infer import InferenceHelper
 
 
 def parse_args():

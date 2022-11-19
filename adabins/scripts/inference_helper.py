@@ -16,7 +16,7 @@ CURRENT_DIR = os.path.dirname(os.path.abspath(__file__))
 sys.path.append(os.path.dirname(CURRENT_DIR))
 from models import UnetAdaptiveBins
 
-from model_io import load_checkpoint 
+from adabins.model_io import load_checkpoint 
 
 def _is_pil_image(img):
     return isinstance(img, Image.Image)

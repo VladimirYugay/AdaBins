@@ -7,7 +7,7 @@ import numpy as np
 import PIL.Image as pil
 import torch
 
-from infer import InferenceHelper
+from scripts.infer import InferenceHelper
 
 
 def parse_args():

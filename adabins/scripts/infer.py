@@ -5,7 +5,7 @@ import cv2
 import numpy as np 
 
 import matplotlib.pyplot as plt
-from inference_helper import InferenceHelper
+from .inference_helper import InferenceHelper
 from PIL import Image
 from typing import List
 
