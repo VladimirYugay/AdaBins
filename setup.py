@@ -11,7 +11,7 @@ def find_version():
 setup(
     name="adabins",
     version=find_version(),
-    description="A library monocular depth estimation",
+    description="A library for monocular depth estimation",
     author="Vladimir Yugay",
     license="MIT",
     url="https://github.com/VladimirYugay/AdaBins",
