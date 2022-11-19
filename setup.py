@@ -11,7 +11,7 @@ def find_version():
 setup(
     name="adabins",
     version=find_version(),
-    description="A library for deep learning person re-ID in PyTorch",
+    description="A library monocular depth estimation",
     author="Vladimir Yugay",
     license="MIT",
     url="https://github.com/VladimirYugay/AdaBins",
