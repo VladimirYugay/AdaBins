@@ -17,6 +17,7 @@ conda activate adabins
 Pip:
 ```
 pip install -r requirements.txt
+pip install -e .
 ```
 ## Inference
 
@@ -25,11 +26,11 @@ In `scripts` there are scripts for inferences on a single image, as well as on `
 To run inference on a folder of images:
 
 ```
-python scripts/infer.py --model_path <checkpoint_path_pt> --input_path <images_dir> --output_path <output_dir>
+python adabins/scritps/infer.py --model_path <checkpoint_path_pt> --input_path <images_dir> --output_path <output_dir>
 ```
 
 To run training on MOTSynth dataset:
 
 ```
-python train.py --data_path <path_to_motsynth> --gt_path <path_to_motsynth_depth> --data_path_eval <path_to_motsynth> --gt_path_eval <path_to_motsynth_depth>  --bs 24 --epochs 50 --input_height 576 --input_width 960 --validate_every 1 --filenames_file ./train_test_inputs/adabins_motsynth/motsynth_train.txt --filenames_file_eval ./train_test_inputs/adabins_motsynth/motsynth_test.txt --same-lr --name adabins_for_motsynth`
+python adabins/train.py --data_path <path_to_motsynth> --gt_path <path_to_motsynth_depth> --data_path_eval <path_to_motsynth> --gt_path_eval <path_to_motsynth_depth>  --bs 24 --epochs 50 --input_height 576 --input_width 960 --validate_every 1 --filenames_file ./train_test_inputs/adabins_motsynth/motsynth_train.txt --filenames_file_eval ./train_test_inputs/adabins_motsynth/motsynth_test.txt --same-lr --name adabins_for_motsynth`
 ```
